@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head>
+   <style>
+h1 {
+ font-family: sans-serif;
+ font-weight: bold;
+ font-size: 25px;
+}
+/*REVISAR INICIA ESTILOS DE MAPA*/
+path {
+  stroke-width: 1px;
+  stroke: white;
+
+  fill: #d4d4d4;/*color del mapa*/
+  cursor: pointer;
+}
+path:hover, path.highlighted {
+  fill: #6ecea0;
+}
+div.tooltip {
+  position: absolute;
+  background-color: #808080;
+  border: 1px solid black;
+  color: #ffffff;
+  font-weight: bold;
+  padding: 18px 18px;
+  display: none;
+}
+/*TERMINA ESTILOS DE MAPA*/
+/*INICIA ESTILOS DE GRAFICAS*/
+path {  stroke: #fff; }
+path:hover {  opacity:0.9; }
+rect:hover {  fill:#6ecea0; }/*color hover d elas barras*/
+.axis {  font: 8px sans-serif; }/*REVISAR formato del texto del eje*/
+.legend tr{    border-bottom:1px solid grey; }
+.legend tr:first-child{    border-top:1px solid grey; }
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.x.axis path {  display: none; }
+.legend{
+    margin-bottom:70px;
+    display:inline-block;
+    border-collapse: collapse;
+    border-spacing: 0px;
+}
+.legend td{
+    padding:4px 5px;
+    vertical-align:bottom;
+}
+.legendFreq, .legendPerc{
+    align:right;
+    width:50px;
+}
+/*TERMINA ESTILOS DE GRAFICA*/
+
+</style>
+
+
+</head>
+<body>
+    <script type="text/javascript" src="static/js/bootstrap.min.js"></script>  
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/topojson.v1.min.js"></script>
+
+<div id="container">
+<div class="row" align="center">
+<h1>NUCLEOS AGRARIOS EJECUTADOS</h1>
+
+
+
+<!-- INICIA MAPA-->
+ <div class="features">
+</div>
+<script>
+
+//Map dimensions (in pixels)
+var width = 600,
+    height = 391;
+
+//Map projection
+var projection = d3.geo.mercator()
+    .scale(865.8997000641175)
+    .center([-102.56203867878722,23.94474780005005]) //projection center
+    .translate([width/2,height/2]) //translate to center the map in view
+
+//Generate paths based on projection
+var path = d3.geo.path()
+    .projection(projection);
+
+//Create an SVG
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+//Group for the map features
+var features = svg.append("g")
+    .attr("class","features");
+
+//Create a tooltip, hidden at the start
+var tooltip = d3.select("body").append("div").attr("class","tooltip");
+
+d3.json("mx_tj.topojson",function(error,geodata) {
+  if (error) return console.log(error); //unknown error, check the console
+
+  //Create a path for each map feature in the data
+  features.selectAll("path")
+    .data(topojson.feature(geodata,geodata.objects.states).features) //generate features from TopoJSON
+    .enter()
+    .append("path")
+    .attr("d",path)
+    .on("mouseover",showTooltip)
+    .on("mousemove",moveTooltip)
+    .on("mouseout",hideTooltip)
+    .on("click",clicked);
+
+});
+
+// Add optional onClick events for features here
+// d.properties contains the attributes (e.g. d.properties.name, d.properties.population)
+function clicked(d,i) {
+
+}
+
+
+//Position of the tooltip relative to the cursor
+var tooltipOffset = {x: 5, y: -25};
+
+//Create a tooltip, hidden at the start
+function showTooltip(d) {
+  moveTooltip();
+
+  tooltip.style("display","block")
+      .text(d.properties.state_code);
+}
+
+//Move the tooltip to track the mouse
+function moveTooltip() {
+  tooltip.style("top",(d3.event.pageY+tooltipOffset.y)+"px")
+      .style("left",(d3.event.pageX+tooltipOffset.x)+"px");
+}
+
+//Create a tooltip, hidden at the start
+function hideTooltip() {
+  tooltip.style("display","none");
+}
+</script>
+
+<!-- FIN DE MAPA-->
+</div>
+
+<div class="col-md-6">
+      Item 1
+      <div id='dashboard'>
+</div>
+    </div>
+</div>
+
+
+
+
+
+<script>
+function dashboard(id, fData){
+    var barColor = '#61bb90';
+    function segColor(c){ return {ejidos:"#92e03f", comunidades:"#89dcf3",total:"#61bb90"}[c]; }//
+    
+    // compute total for each state.
+    //AQUI SE CALCULA EL TOTAL
+    fData.forEach(function(d){d.total=d.freq.ejidos+d.freq.comunidades;});
+    
+    // function to handle histogram.
+    function histoGram(fD){
+        var hG={},    hGDim = {t: 60, r: 0, b: 30, l: 0};
+        hGDim.w = 800 - hGDim.l - hGDim.r, 
+        hGDim.h = 300 - hGDim.t - hGDim.b;
+            
+        //create svg for histogram.
+        var hGsvg = d3.select(id).append("svg")
+            .attr("width", hGDim.w + hGDim.l + hGDim.r)
+            .attr("height", hGDim.h + hGDim.t + hGDim.b).append("g")
+            .attr("transform", "translate(" + hGDim.l + "," + hGDim.t + ")");
+
+        // create function for x-axis mapping.
+        var x = d3.scale.ordinal().rangeRoundBands([0, hGDim.w], 0.1)
+                .domain(fD.map(function(d) { return d[0]; }));
+
+        // Add x-axis to the histogram svg.
+        hGsvg.append("g").attr("class", "x axis")
+            .attr("transform", "translate(0," + hGDim.h + ")")
+            .call(d3.svg.axis().scale(x).orient("bottom"));
+
+        // Create function for y-axis map.
+        var y = d3.scale.linear().range([hGDim.h, 0])
+                .domain([0, d3.max(fD, function(d) { return d[1]; })]);
+
+        // Create bars for histogram to contain rectangles and freq labels.
+        var bars = hGsvg.selectAll(".bar").data(fD).enter()
+                .append("g").attr("class", "bar");
+        
+        //create the rectangles.
+        bars.append("rect")
+            .attr("x", function(d) { return x(d[0]); })
+            .attr("y", function(d) { return y(d[1]); })
+            .attr("width", x.rangeBand())
+            .attr("height", function(d) { return hGDim.h - y(d[1]); })
+            .attr('fill',barColor)
+            .on("mouseover",mouseover)// mouseover is defined below.
+            .on("mouseout",mouseout);// mouseout is defined below.
+            
+        //Create the frequency labels above the rectangles.
+        bars.append("text").text(function(d){ return d3.format(",")(d[1])})
+            .attr("x", function(d) { return x(d[0])+x.rangeBand()/2; })
+            .attr("y", function(d) { return y(d[1])-5; })
+            .attr("text-anchor", "middle");
+        
+        function mouseover(d){  // utility function to be called on mouseover.
+            // filter for selected state.
+            var st = fData.filter(function(s){ return s.State == d[0];})[0],
+                nD = d3.keys(st.freq).map(function(s){ return {type:s, freq:st.freq[s]};});
+               
+            // call update functions of pie-chart and legend.    
+            pC.update(nD);//nD
+            leg.update(nD);//REVISAR
+        }
+        
+        function mouseout(d){    // utility function to be called on mouseout.
+            // reset the pie-chart and legend.    
+            pC.update(tF2);//REVISAR solo se visualizan 2 columnas
+            leg.update(tF2);//REVISAR se visualizan las 3 columnas originales
+        }
+        
+        // create function to update the bars. This will be used by pie-chart.
+        hG.update = function(nD, color){
+            // update the domain of the y-axis map to reflect change in frequencies.
+            y.domain([0, d3.max(nD, function(d) { return d[1]; })]);
+            
+            // Attach the new data to the bars.
+            var bars = hGsvg.selectAll(".bar").data(nD);
+            
+            // transition the height and color of rectangles. REVISAR Asi se ven las barras cuando el puntero esta sobre el pie 
+            bars.select("rect").transition().duration(500)
+                .attr("y", function(d) {return y(d[1]); })
+                .attr("height", function(d) { return hGDim.h - y(d[1]); })
+                .attr("fill", color);
+
+            // transition the frequency labels location and change value. REVISAR muestra las cifras de las barras cuando el puntero esta en  el pie
+            bars.select("text").transition().duration(500)
+                .text(function(d){ return d3.format(",")(d[1])})
+                .attr("y", function(d) {return y(d[1])-15; });            
+        }        
+        return hG;
+    }
+    
+    // function to handle pieChart.
+    function pieChart(pD){
+        var pC ={},    pieDim ={w:200, h: 200};
+        pieDim.r = Math.min(pieDim.w, pieDim.h) / 2;// REVISAR"/2" convierte de cuadrado a circulo
+                
+        // create svg for pie chart.
+        var piesvg = d3.select(id).append("svg")
+            .attr("width", pieDim.w).attr("height", pieDim.h).append("g")
+            .attr("transform", "translate("+pieDim.w/2+","+pieDim.h/2+")");
+        
+        // create function to draw the arcs of the pie slices.
+        var arc = d3.svg.arc().outerRadius(pieDim.r - 10).innerRadius(50);//REVISAR iinerRadius convierte el pie en dona
+
+        // create a function to compute the pie slice angles.
+        var pie = d3.layout.pie().sort(null).value(function(d) { return d.freq; });
+
+        // Draw the pie slices.
+        piesvg.selectAll("path").data(pie(pD)).enter().append("path").attr("d", arc)
+            .each(function(d) { this._current = d; })
+            .style("fill", function(d) { return segColor(d.data.type); })
+            .on("mouseover",mouseover).on("mouseout",mouseout);
+
+        // create function to update pie-chart. This will be used by histogram.
+        pC.update = function(nD){
+            piesvg.selectAll("path").data(pie(nD)).transition().duration(500)
+                .attrTween("d", arcTween);
+                //REVISAR carga el pie cuando el puntero esta en la barra
+        }        
+        // Utility function to be called on mouseover a pie slice.
+        function mouseover(d){
+            // call the update function of histogram with new data. REVISAR carga las barras cuando el puntero esta en el pie
+            hG.update(fData.map(function(v){ 
+                return [v.State,v.freq[d.data.type]];}),segColor(d.data.type));
+        }
+        //Utility function to be called on mouseout a pie slice.
+        function mouseout(d){
+            // call the update function of histogram with all data.
+            //ESTA ES LA GRAFICA QUE PRESENTA EL TOTAL CALCULADO
+            hG.update(fData.map(function(v){
+                return [v.State,v.total];}), barColor);
+        }
+        // Animating the pie-slice requiring a custom function which specifies
+        // how the intermediate paths should be drawn.
+        function arcTween(a) {
+            var i = d3.interpolate(this._current, a);
+            this._current = i(0);
+            return function(t) { return arc(i(t));    };
+        }    
+        return pC;
+    }
+    
+    // function to handle legend. REVISAR aqui se genera la tabla de acotaciones de la grafica de pie
+    function legend(lD){
+        var leg = {};
+            
+        // create table for legend.
+        var legend = d3.select(id).append("table").attr('class','legend');
+        
+        // create one row per segment.
+        var tr = legend.append("tbody").selectAll("tr").data(lD).enter().append("tr");
+
+
+        // create the first column for each segment.
+        tr.append("td").append("svg").attr("width", '16').attr("height", '16').append("rect")
+            .attr("width", '16').attr("height", '16')
+            .attr("fill",function(d){ return segColor(d.type); });
+            
+        // create the second column for each segment.
+        tr.append("td").text(function(d){ return d.type;});
+
+        // create the third column for each segment.
+        tr.append("td").attr("class",'legendFreq')
+            .text(function(d){ return d3.format(",")(d.freq);});
+
+        // create the fourth column for each segment.
+        tr.append("td").attr("class",'legendPerc')
+            .text(function(d){ return getLegend(d,lD);});
+
+
+        // Utility function to be used to update the legend.
+        leg.update = function(nD){
+            // update the data attached to the row elements.
+            var l = legend.select("tbody").selectAll("tr").data(nD);
+
+            // update the frequencies.
+            l.select(".legendFreq").text(function(d){ return d3.format(",")(d.freq);});
+
+            // update the percentage column.
+            l.select(".legendPerc").text(function(d){ return getLegend(d,nD);});        
+        }
+        
+        function getLegend(d,aD){ // Utility function to compute percentage.
+            return d3.format("%")(d.freq/d3.sum(aD.map(function(v){ return v.freq; })));
+        }
+
+        return leg;
+    }
+    
+    // calculate total frequency by segment for all state.
+    //REVISAR: AQUI SE DEFINEN LOS RUBROS QUE SE GRAFICAN EN EL PIE Y SE MUESTRAN EL LA TABLA DE ACOTACIONES
+    //se replico la variable para contener solo 2 de las columnas originales
+    var tF2 = ['ejidos','comunidades'].map(function(d){ //,'total'  
+
+        return {type:d, freq: d3.sum(fData.map(function(t){ return t.freq [d];}))}; 
+
+    });    
+    
+     var tF = ['ejidos','comunidades','total'].map(function(d){ //,  
+        return {type:d, freq: d3.sum(fData.map(function(t){ return t.freq[d];}))}; 
+    });   
+
+    // calculate total frequency by state for all segment.
+    var sF = fData.map(function(d){return [d.State,d.total];});//
+
+    var hG = histoGram(sF), // create the histogram.
+        pC = pieChart(tF2), // create the pie-chart. REVISAR se cambia tF por tF2 para que se visualisen unicamente 2 columnas
+        leg= legend(tF2);  //revisar - create the legend.
+
+
+}
+
+
+//d3.select('#download')
+  //  .on('click', function() {
+    //    var data = nameDim.top(Infinity);
+      //  if(d3.select('#download-type input:checked').node().value==='table') {
+        //    data = data.map(function(d) {
+          //      var row = {};
+            //    table.columns().forEach(function(c) {
+              //      row[table._doColumnHeaderFormat(c)] = table._doColumnValueFormat(c, d);
+               // });
+                //return row;
+//            });
+  //      }
+    //    var blob = new Blob([d3.csv.format(data)], {type: "text/csv;charset=utf-8"});
+      //  saveAs(blob, 'data.csv');
+   // });
+    
+
+
+</script>
+
+<br><br>
+
+<!--Datos para las graficas, y items para graficar pie (quitmos el total)-->
+<script>
+var freqData=[
+{State:'AG',freq:{ejidos:184, comunidades:3//, total:187
+}}
+,{State:'BC',freq:{ejidos:235, comunidades:3//, total:238
+}}
+,{State:'BCS',freq:{ejidos:99, comunidades:0//, total:99
+}}
+,{State:'CAM',freq:{ejidos:385, comunidades:0//, total:385
+}}
+,{State:'COA',freq:{ejidos:889, comunidades:2//, total:891
+}}
+,{State:'COL',freq:{ejidos:165, comunidades:2//, total:167
+}}
+,{State:'CHI',freq:{ejidos:3130, comunidades:90//, total:3220
+}}
+,{State:'CHIH',freq:{ejidos:908, comunidades:72//, total:980
+}}
+,{State:'CDMX',freq:{ejidos:48, comunidades:8//, total:50
+}}
+,{State:'DGO',freq:{ejidos:987, comunidades:130//, total:1117
+}}
+,{State:'GTO',freq:{ejidos:565, comunidades:1//, total:572
+}}
+,{State:'GUE',freq:{ejidos:1054, comunidades:197//, total:1251
+}}
+,{State:'HGO',freq:{ejidos:1027, comunidades:145//, total:1172
+}}
+,{State:'JAL',freq:{ejidos:397, comunidades:57//, total:454
+}}
+,{State:'MEX',freq:{ejidos:1066, comunidades:177//, total:1243
+}}
+,{State:'MICH',freq:{ejidos:1761, comunidades:119//, total:1880
+}}
+,{State:'MOR',freq:{ejidos:205, comunidades:26//, total:231
+}}
+,{State:'NAY',freq:{ejidos:366, comunidades:37//, total:403
+}}
+,{State:'NL',freq:{ejidos:594, comunidades:14//, total:608
+}}
+,{State:'OAX',freq:{ejidos:853, comunidades:733//, total:1586
+}}
+,{State:'QRO',freq:{ejidos:364, comunidades:16//, total:380
+}}
+,{State:'QROO',freq:{ejidos:282, comunidades:0//, total:282
+}}
+,{State:'SLP',freq:{ejidos:1280, comunidades:164//, total:1444
+}}
+,{State:'SIN',freq:{ejidos:1214, comunidades:99//, total:1313
+}}
+,{State:'SON',freq:{ejidos:955, comunidades:50//, total:1005
+}}
+,{State:'TAB',freq:{ejidos:809, comunidades:2//, total:811
+}}
+,{State:'TAM',freq:{ejidos:1391, comunidades:4//, total:1395
+}}
+,{State:'TLX',freq:{ejidos:243, comunidades:2//, total:245
+}}
+,{State:'VER',freq:{ejidos:3649, comunidades:83//, total:3732
+}}
+,{State:'YUC',freq:{ejidos:737, comunidades:1//, total:738
+}}
+,{State:'ZAC',freq:{ejidos:755, comunidades:15//, total:770
+}}
+];
+
+dashboard('#dashboard',freqData);
+</script>
+
+<!-- not sure why all these styles necessary, not the point of this 
+  <div style="clear: both; margin: 30px; float: left">
+    <div id="table"></div>
+    <div id="download-type" style="clear: both; float: left">
+      <div><label><input type=radio name="operation" value="raw" checked="true">&nbsp;all data</label></div>
+      <div><label><input type=radio name="operation" value="table">&nbsp;table data</label></div>
+    </div>
+    <div style="float: left">
+      <button class="btn" id="download">download</button>
+    </div>
+  </div>-->

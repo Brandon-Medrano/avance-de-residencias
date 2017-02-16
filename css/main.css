@@ -1,0 +1,73 @@
+
+#fondo {
+background-color: #f3f4f4;
+height:100%;
+padding-top: 10px;
+padding-bottom: 10px;
+}
+
+
+/* main.css: Add and override styles */
+.dc-data-count small {
+  font-size: 16px;
+}
+/*
+.container-fluid {
+  padding-left: 40px;
+  padding-right: 40px;
+}
+
+*/
+
+.pie-chart {
+  height: 150px;
+}
+
+.dc-chart .axis text{
+  font-size: 12px;
+}
+
+text {
+  font-size: 9px;
+}
+
+/*
+#map {
+  height: 150px;
+}
+
+*/
+
+
+
+
+#control-row {
+  padding-bottom: 20px;
+}
+
+a { cursor: pointer }
+
+/*REVISAR INICIA ESTILOS DE MAPA*/
+path {
+  stroke-width: 1px;
+  
+
+  fill: #d4d4d4;/*color del mapa*/
+  cursor: pointer;
+}
+
+path:hover, path.highlighted {
+
+  fill: #6ecea0;
+}
+
+div.tooltip {
+  position: absolute;
+  background-color: #808080;
+  border: 1px solid black;
+  color: #ffffff;
+  font-weight: bold;
+  padding: 18px 18px;
+  display: none;
+}
+/*TERMINA ESTILOS DE MAPA*/

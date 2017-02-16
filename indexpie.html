@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>dc.js - Pie Chart Example</title>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" type="text/css" href="../css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="../css/dc.css"/>
+</head>
+<body>
+
+<div class="container">
+<script type="text/javascript" ></script>
+<div id="test"></div>
+<div id="test2"></div>
+
+<script type="text/javascript" src="../js/d3.js"></script>
+<script type="text/javascript" src="../js/crossfilter.js"></script>
+<script type="text/javascript" src="../js/dc.js"></script>
+<script type="text/javascript">
+
+var chart = dc.pieChart("#test");
+var chart2 = dc.pieChart("#test2");
+
+
+d3.csv("datos.csv", function(data) {
+var data   = crossfilter(data),
+// var data   =ndx;
+    runDimension  = data.dimension(function(d) {return "Edo:"+d.edo;})
+   // var  stateRaisedSum = runDimension.group().reduceSum(function(d) {return d.indice;});
+    var  stateRaisedSum2 = runDimension.group().reduceSum(function(d) {return d.indice2;});
+chart2
+    .width(600)
+    .height(400)
+    .slicesCap(5)
+    .innerRadius(100)
+    .dimension(runDimension)
+    .group(stateRaisedSum2)
+    .legend(dc.legend())
+    // workaround for #703: not enough data is accessible through .label() to display percentages
+    .on('pretransition', function(chart) {
+        chart2.selectAll('text.pie-slice').text(function(d) {
+            return d.data.key;
+        })
+    });
+  chart2.render();
+});
+
+d3.csv("datos.csv", function(data) {
+
+  var data   = crossfilter(data),
+//  var data   =ndx;
+    runDimension  = data.dimension(function(d) {return "Estado:"+d.edo;})
+    var  stateRaisedSum = runDimension.group().reduceSum(function(d) {return d.indice;});
+   // var  stateRaisedSum2 = runDimension.group().reduceSum(function(d) {return d.indice2;});
+
+
+  chart
+    .width(768)
+    .height(800)
+    .slicesCap(10)
+    .innerRadius(100)
+    .dimension(runDimension)
+    .group(stateRaisedSum)
+    .legend(dc.legend())
+    // workaround for #703: not enough data is accessible through .label() to display percentages
+    .on('pretransition', function(chart) {
+        chart.selectAll('text.pie-slice').text(function(d) {
+            return d.data.key + ' ' + dc.utils.printSingleValue((d.endAngle - d.startAngle) / (2*Math.PI) * 100) + '%%%%';
+        })
+    });
+  chart.render();
+});
+
+</script>
+
+</div>
+</body>
+</html>
+asdsbddssdb

@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Propiedad social</title>
+
+    <meta charset="UTF-8">
+
+
+
+    <link href="../css/bootstrap.min.css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" type="text/css" href="../css/dc.css"/>
+    <link rel="stylesheet" type="text/css" href="../css/main.css">
+
+    <!-- Bootstrap 
+    <link rel="stylesheet" type="text/css" href="../css/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="../css/main.css">-->
+      
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+
+</head>
+<body onload="sizeChange()">
+
+    <script type="text/javascript" src="../js/jquery-3.1.1.min.js"></script>    
+    <script type="text/javascript" src="../js/bootstrap.min.js"></script> 
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <!--TERMINA JS -->
+    <script src="../js/d3.v3.min.js.descarga"></script>
+    <script src="../js/topojson.v0.min.js.descarga"></script>
+    <script src="../js/jquery.min.js.descarga"></script>
+    <script type="text/javascript" src="../js/d3.js"></script>
+    <script type="text/javascript" src="../js/crossfilter.js"></script>
+    <script type="text/javascript" src="../js/dc.js"></script>
+
+<div id="container" class="container-fluid">
+ <div class="row">
+    <div class="col-xs-12 col-sm-6 col-md-8">
+         <div id="us-chart" class="">
+           <strong> Avance de certificación</strong> 
+
+            <a class="reset" href="javascript:usChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+            <span class="reset" style="display: none;"> | Filtro aplicado: <span class="filter"></span></span>
+         </div>
+    </div> 
+    <div class="col-xs-6 col-md-4">
+otro div
+    </div>
+</div>
+    <div class="clearfix"></div>
+
+    <div id="industry-chart">
+        <strong>Documentos expedidos</strong> (y: Numero de documentos, x: Total en miles)
+        <a class="reset" href="javascript:industryChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+
+        <div class="clearfix"></div>
+    </div>
+
+    <div class="clearfix"></div>
+
+    <div id="round-chart">
+        <strong>By Rounds</strong> (y: number of deals, x: total amount raised in millions, radius: amount raised)
+        <a class="reset" href="javascript:roundChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+
+        <div class="clearfix"></div>
+    </div>
+
+    <div class="clearfix"></div>
+
+<!--REVISAR PIECHART-->
+<div class="row">
+    <div id="yearly-bubble-chart" class="dc-chart">
+        <strong>Yearly Performance</strong> (radius: fluctuation/index ratio, color: gain/loss)
+        <a class="reset" href="javascript:yearlyBubbleChart.filterAll();dc.redrawAll();"
+           style="display: none;">reset</a>
+
+        <div class="clearfix"></div>
+    </div>
+</div>
+
+
+<div class="row">
+    <div id="gain-loss-chart">
+        <strong>Days by Gain/Loss</strong>
+        <a class="reset" href="javascript:gainOrLossChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+
+        <div class="clearfix"></div>
+    </div>
+
+    <div id="quarter-chart">
+        <strong>Quarters</strong>
+        <a class="reset" href="javascript:quarterChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+
+        <div class="clearfix"></div>
+    </div>
+
+    <div id="day-of-week-chart">
+        <strong>Day of Week</strong>
+        <a class="reset" href="javascript:dayOfWeekChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+
+        <div class="clearfix"></div>
+    </div>
+
+    <div id="fluctuation-chart">
+        <strong>Days by Fluctuation(%)</strong>
+        <span class="reset" style="display: none;">range: <span class="filter"></span></span>
+        <a class="reset" href="javascript:fluctuationChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+
+        <div class="clearfix"></div>
+    </div>
+</div>
+
+<!--FIN REVISAR PIECHART-->  
+    <div>
+        <a href="javascript:dc.filterAll(); dc.renderAll();">Reset All</a>
+    </div>
+
+</div>
+
+<script type="text/javascript">
+    var numberFormat = d3.format(".2f");
+
+    var usChart = dc.geoChoroplethChart("#us-chart");
+    var industryChart = dc.bubbleChart("#industry-chart");
+    var roundChart = dc.bubbleChart("#round-chart");
+   // var yearlybubblechart = dc.bubbleChart("#industry-chart");
+
+
+    d3.json("php/data3.php", function (csv) {
+        var data = crossfilter(csv);
+
+        var states = data.dimension(function (d) {
+            return d["Estado"];
+        });
+        //REVISAR VARIABLES
+
+        //FIN REVISAR VARIABLES
+        var stateRaisedSum = states.group().reduceSum(function (d) {
+            return d["Raised"];
+        });
+
+        var industries = data.dimension(function (d) {
+            return d["Industry Group"];
+        });
+        var statsByIndustries = industries.group().reduce(
+                function (p, v) {
+                    p.amountRaised += +v["Raised"];
+                    p.deals += +v["Deals"];
+                    return p;
+                },
+                function (p, v) {
+                    p.amountRaised -= +v["Raised"];
+                    if (p.amountRaised < 0.001) p.amountRaised = 0; // do some clean up
+                    
+                    p.deals -= +v["Deals"];
+                    return p;
+                },
+                function () {
+                    return {amountRaised: 0, deals: 0}
+                }
+        );
+        
+
+        var rounds = data.dimension(function (d) {
+            return d["RoundClassDescr"];
+        });
+        var statsByRounds = rounds.group().reduce(
+                function (p, v) {
+                    p.amountRaised += +v["Raised"];
+                    p.deals += +v["Deals"];
+                    return p;
+                },
+                function (p, v) {
+                    p.amountRaised -= +v["Raised"];
+                    if (p.amountRaised < 0.001) p.amountRaised = 0; // do some clean up
+                    p.deals -= +v["Deals"];
+                    return p;
+                },
+                function () {
+                    return {amountRaised: 0, deals: 0}
+                }
+        );
+
+        
+        //SCRIPT DE RESPONSIVE//
+    
+  d3.select(window)
+       .on("resize", sizeChange);
+
+        var projection = d3.geo.albersUsa()
+        .scale(100);
+
+        var path = d3.geo.path()
+        .projection(projection);
+
+    //FIN DE RESPONSIVE//
+
+        d3.json("../geo/mx-states.json", function (statesJson) {
+            usChart.width("100%")
+                    .height("250%")
+                    .dimension(states)
+                    .group(stateRaisedSum)
+                    .colors(d3.scale.quantize().range(["#E2F2FF", "#C4E4FF", "#9ED2FF", "#81C5FF", "#6BBAFF", "#51AEFF", "#36A2FF", "#1E96FF", "#0089FF", "#0061B5"]))
+                    .colorDomain([0, 200])
+                    .colorCalculator(function (d) { return d ? usChart.colors()(d) : '#ccc'; })
+                    .overlayGeoJson(statesJson.features, "state", function (d) {
+                        return d.properties.name;
+                    })
+                    .title(function (d) {
+                        return "Estado: " + d.key + "\nsuma: " + numberFormat(d.value ? d.value : 0) + " M" + "\nSuperficie: " + d.key + " has";
+
+                    });
+
+
+            industryChart.width(990)
+                    .height(200)
+                    .margins({top: 10, right: 50, bottom: 30, left: 60})
+                    .dimension(industries)
+                    .group(statsByIndustries)
+                    .colors(d3.scale.category10())
+                    .keyAccessor(function (p) {
+                        return p.value.amountRaised;
+                    })
+                    .valueAccessor(function (p) {
+                        return p.value.deals;
+                    })
+                    .radiusValueAccessor(function (p) {
+                        return p.value.amountRaised;
+                    })
+                    .x(d3.scale.linear().domain([0, 5000]))
+                    .r(d3.scale.linear().domain([0, 4000]))
+                    .minRadiusWithLabel(15)
+                    .elasticY(true)
+                    .yAxisPadding(100)
+                    .elasticX(true)
+                    .xAxisPadding(200)
+                    .maxBubbleRelativeSize(0.07)
+                    .renderHorizontalGridLines(true)
+                    .renderVerticalGridLines(true)
+                    .renderLabel(true)
+                    .renderTitle(true)
+                    .title(function (p) {
+                        return p.key
+                                + "\n"
+                                + "Amount Raised: " + numberFormat(p.value.amountRaised) + "M\n"
+                                + "Number of Deals: " + numberFormat(p.value.deals);
+                                
+                    });
+            industryChart.yAxis().tickFormat(function (s) {
+                return s + " deals";
+            });
+            industryChart.xAxis().tickFormat(function (s) {
+                return s + "M";
+            });
+
+            roundChart.width(990)
+                    .height(200)
+                    .margins({top: 10, right: 50, bottom: 30, left: 60})
+                    .dimension(rounds)
+                    .group(statsByRounds)
+                    .colors(d3.scale.category10())
+                    .keyAccessor(function (p) {
+                        return p.value.amountRaised;
+                    })
+                    .valueAccessor(function (p) {
+                        return p.value.deals;
+                    })
+                    .radiusValueAccessor(function (p) {
+                        return p.value.amountRaised;
+                    })
+                    .x(d3.scale.linear().domain([0, 5000]))
+                    .r(d3.scale.linear().domain([0, 9000]))
+                    .minRadiusWithLabel(15)
+                    .elasticY(true)
+                    .yAxisPadding(150)
+                    .elasticX(true)
+                    .xAxisPadding(300)
+                    .maxBubbleRelativeSize(0.07)
+                    .renderHorizontalGridLines(true)
+                    .renderVerticalGridLines(true)
+                    .renderLabel(true)
+                    .renderTitle(true)
+                    .title(function (p) {
+                        return p.key
+                                + "\n"
+                                + "Amount Raised: " + numberFormat(p.value.amountRaised) + "M\n"
+                                + "Number of Deals: " + numberFormat(p.value.deals);
+                    });
+            roundChart.yAxis().tickFormat(function (s) {
+                return s + " deals";
+            });
+            roundChart.xAxis().tickFormat(function (s) {
+                return s + "M";
+            });
+
+            dc.renderAll();
+        });
+    });
+function sizeChange() {
+      d3.select("g").attr("transform", "scale(" + $("#us-chart").width()/500 + ")");
+      
+      $("g").height($("#us-chart").width()*0.618);
+  }
+</script>
+
+
+
+<!--revisar js para pie-->
+
+<script type="text/javascript" src="../js/colorbrewer.js"></script>
+
+<script type="text/javascript" src="stock.js"></script>
+
+<!--fin revisar js para pie-->
+
+
+  <div >
+<!--  
+    <div id="us"><svg width="100%" style="height: 600.426px;"><g transform="scale(1.6188888888888888)"></g></svg></div>
+    </div>
+-->
+  <script type="text/javascript">
+    d3.select(window)
+            .on("resize", sizeChange);
+
+    var projection = d3.geo.albersUsa()
+        .scale(1100);
+
+    var path = d3.geo.path()
+        .projection(projection);
+
+//    var svg = d3.select("#container")
+  //      .append("svg")
+    //    .attr("width", "100%")
+      //  .append("g");
+    
+ 
+//ESTA FUNCIÓN MODIFICA SOLO EL TAMAÑO DEL MAPA
+    function sizeChange() { 
+        d3.select("g").attr("transform", "scale(" + $("#us-chart").width()/500 + ")");
+        $("svg").height($("#us-chart").width()*.7);
+    }
+
+  </script>
+  
+</body></html>
+
+
+
+
+
+
+
+
+
