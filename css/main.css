@@ -71,3 +71,63 @@ div.tooltip {
   display: none;
 }
 /*TERMINA ESTILOS DE MAPA*/
+
+
+
+h1 {
+ font-family: sans-serif;
+ font-weight: bold;
+ font-size: 25px;
+}
+/*REVISAR INICIA ESTILOS DE MAPA*/
+path {
+  stroke-width: 1px;
+  stroke: white;
+
+  fill: #d4d4d4;/*color del mapa*/
+  cursor: pointer;
+}
+path:hover, path.highlighted {
+  fill: #6ecea0;
+}
+div.tooltip {
+  position: absolute;
+  background-color: #808080;
+  border: 1px solid black;
+  color: #ffffff;
+  font-weight: bold;
+  padding: 18px 18px;
+  display: none;
+}
+/*TERMINA ESTILOS DE MAPA*/
+/*INICIA ESTILOS DE GRAFICAS*/
+path {  stroke: #fff; }
+path:hover {  opacity:0.9; }
+rect:hover {  fill:#6ecea0; }/*color hover d elas barras*/
+.axis {  font: 8px sans-serif; }/*REVISAR formato del texto del eje*/
+.legend tr{    border-bottom:1px solid grey; }
+.legend tr:first-child{    border-top:1px solid grey; }
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.x.axis path {  display: none; }
+.legend{
+    margin-bottom:70px;
+    display:inline-block;
+    border-collapse: collapse;
+    border-spacing: 0px;
+}
+.legend td{
+    padding:4px 5px;
+    vertical-align:bottom;
+}
+.legendFreq, .legendPerc{
+    align:right;
+    width:50px;
+}
+/*TERMINA ESTILOS DE GRAFICA*/

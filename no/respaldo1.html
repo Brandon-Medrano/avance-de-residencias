@@ -21,8 +21,8 @@
                <div class="row">
                      <div class="col s12" class="card-panel white z-depth-4">                                  
               
-                                <div class="card-panel light-green accent-3"> 
-                                     <h3 align="center">Registro Agrario Nacional<h3>                    
+                                <div class="card-panel blue z-depth-4"> 
+                                     <h3 align="center">Registro Agrario Nacional <h3>                    
                                </div>
                                        <div  id="us-chart" class="card-panel white z-depth-4"> 
                                               <h2>Mapa de Geojeson</h2>
@@ -39,14 +39,9 @@
                                                                                 <a class="reset" href="javascript:industryChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>            
                                                                       </div>
                                                                                  <div id="round-chart"  class="card-panel white z-depth-4">
-                                                                                           <strong>By Rounds</strong> (y: number of narnum, x: total amount rangoporc in millions, radius: amount rangoporc)
+                                                                                           <strong>By Rounds</strong> (y: number of deals, x: total amount raised in millions, radius: amount raised)
                                                                                           <a class="reset" href="javascript:roundChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
-                                                                                </div>
-
-                                                                                               <div id="test3" class="card-panel white z-depth-4">
-
-                                                                                               </div>
-
+                                                                                </div> 
                  </div><!-- class col -->
           </div><!--row -->
     </div><!--container -->                                                                   
@@ -67,18 +62,20 @@
     var roundChart = dc.bubbleChart("#round-chart");
     var chart = dc.pieChart("#test");
     var chart2 = dc.pieChart("#test2");
-    var chart3 = dc.barChart('#test3');
-
+    var total;
+    
     d3.json("php/data3.php", function (data) {
+    
     
     var data = crossfilter(data);
 
      runDimension  = data.dimension(function(d) {return ""+d.edoabre;})
       var  g = runDimension.group().reduceSum(function(d) {return d.ejcernum;});
  
+ 
+ 
      runDimension2  = data.dimension(function(d) {return ""+d.edoabre;})
-      
-      var  gi = runDimension2.group().reduceSum(function(d) {return  (parseFloat(d.ejcernum)+ parseFloat(d.comucernum))});
+      var  gi = runDimension2.group().reduceSum(function(d) {return( (d.ejcernum) +(d.comucernum));});
  
         var states = data.dimension(function (d) {
             return d["edoabre"];
@@ -92,59 +89,56 @@
             return d["RoundClassDescr"];
         }); 
         
-         var staterangoporcSum = states.group().reduceSum(function (d) {
-          return d["rangoporc"];
+         var stateRaisedSum = states.group().reduceSum(function (d) {
+          return d["Raised"];
         });
-
-         fruitDimension = data.dimension(function(d) {return d.edoabre;}),
-          sumGroup = fruitDimension.group().reduceSum(function(d) {return d.narnum;});
 
         var statsByIndustries = industries.group().reduce(
                 function (p, v) {
-                    p.amountrangoporc += +v["rangoporc"];
-                    p.narnum += +v["narnum"];
+                    p.amountRaised += +v["Raised"];
+                    p.deals += +v["Deals"];
                     return p;
                 },
                 function (p, v) {
-                    p.amountrangoporc -= +v["rangoporc"];
-                    if (p.amountrangoporc < 0.001) p.amountrangoporc = 0; // do some clean up
-                    p.narnum -= +v["narnum"];
+                    p.amountRaised -= +v["Raised"];
+                    if (p.amountRaised < 0.001) p.amountRaised = 0; // do some clean up
+                    p.deals -= +v["Deals"];
                     return p;
                 },
                 function () {
-                    return {amountrangoporc: 0, narnum: 0}
+                    return {amountRaised: 0, deals: 0}
                 }
         );
 
         var statsByRounds = rounds.group().reduce(
                  function (p, v) {
-                    p.amountrangoporc += +v["rangoporc"];
-                    p.narnum += +v["narnum"];
+                    p.amountRaised += +v["Raised"];
+                    p.deals += +v["Deals"];
                     return p;
                 },
                 function (p, v) {
-                    p.amountrangoporc -= +v["rangoporc"];
-                    if (p.amountrangoporc < 0.001) p.amountrangoporc = 0; // do some clean up
-                    p.narnum -= +v["narnum"];
+                    p.amountRaised -= +v["Raised"];
+                    if (p.amountRaised < 0.001) p.amountRaised = 0; // do some clean up
+                    p.deals -= +v["Deals"];
                     return p;
                 },
                 function () {
-                    return {amountrangoporc: 0, narnum: 0}
+                    return {amountRaised: 0, deals: 0}
                 }
         );
-        d3.json("../geo/mx-states.json", function (statesJson) {
+        d3.json("../geo/us-states.json", function (statesJson) {
             usChart.width(990)
                     .height(380)
                     .dimension(states)
-                    .group(staterangoporcSum)
-                    .colors(d3.scale.quantize().range([ "#f4d03f","#d1f2eb","#a3e4d7","#f39c12","#48c9b0","#1abc9c","#17a589","#148f77","#117864","#0e6251"]))
-                    .colorDomain([32, 190])
+                    .group(stateRaisedSum)
+                    .colors(d3.scale.quantize().range(["#E2F2FF", "#C4E4FF", "#9ED2FF", "#81C5FF", "#6BBAFF", "#51AEFF", "#36A2FF", "#1E96FF", "#0089FF", "#0061B5"]))
+                    .colorDomain([0, 20])
                     .colorCalculator(function (d) { return d ? usChart.colors()(d) : '#ccc'; })
                     .overlayGeoJson(statesJson.features, "state", function (d) {
                         return d.properties.name;
                     })
                     .title(function (d) {
-                   return "Estado: " + d.key + "\nAvance de certificación : " + numberFormat(d.value ? d.value : 0) + "%";
+                   return "Estado Abreviatura: " + d.key + "\nTotal : " + numberFormat(d.value ? d.value : 0) + "M";
                 });        
 
                      chart
@@ -175,20 +169,7 @@
                      return d.data.key + ' ' + dc.utils.printSingleValue((d.endAngle - d.startAngle) / (2*Math.PI) * 100) + '%';
                      })
                      });
-
-                     chart3
-                     .width(768)
-                     .height(380)
-                     .x(d3.scale.ordinal())
-                     .xUnits(dc.units.ordinal)
-                     .brushOn(false)
-                     .xAxisLabel('Fruit')
-                     .yAxisLabel('Quantity Sold')
-                     .dimension(fruitDimension)
-                     .barPadding(0.1)
-                     .outerPadding(0.05)
-                     .group(sumGroup);
-
+           
             industryChart.width(990)
                     .height(200)
                     .margins({top: 10, right: 50, bottom: 30, left: 60})
@@ -196,13 +177,13 @@
                     .group(statsByIndustries)
                     .colors(d3.scale.category10())
                     .keyAccessor(function (p) {             // .keyAccessor- El Xvalor se pasa a la .x()escala para determinar la ubicación de píxeles
-                        return p.value.amountrangoporc;
+                        return p.value.amountRaised;
                     })
                     .valueAccessor(function (p) {
-                        return p.value.narnum;
+                        return p.value.deals;
                     })
                     .radiusValueAccessor(function (p) {
-                        return p.value.amountrangoporc;
+                        return p.value.amountRaised;
                     })
                     .x(d3.scale.linear().domain([0, 500]))
                     .r(d3.scale.linear().domain([0, 400]))
@@ -221,16 +202,16 @@
 
                         return p.key
                                 + "\n"
-                                + "Cantidad ->Porcentaje: " + numberFormat(p.value.amountrangoporc) + "%\n"
-                                + "Numero  ->Núcleos Agrarios: " + numberFormat(p.value.narnum);
+                                + "Cantidad ->Raised: " + numberFormat(p.value.amountRaised) + "M\n"
+                                + "Numero  ->Deals: " + numberFormat(p.value.deals);
                     });
             industryChart.yAxis().tickFormat(function (s) {    // Establecer un formato de señal de encargo. Tanto .yAxis()y .xAxis()devolver un objeto eje, por lo que cualquier encadenamiento método adicional se aplica al eje, no el gráfico.
 
 
-                 return s + " narnum";
+                 return s + " deals";
             });
             industryChart.xAxis().tickFormat(function (s) {
-                return s + "";
+                return s + "M";
             });
             roundChart.width(990)
                     .height(200)
@@ -239,13 +220,13 @@
                     .group(statsByRounds)
                     .colors(d3.scale.category10())
                     .keyAccessor(function (p) {
-                        return p.value.amountrangoporc;
+                        return p.value.amountRaised;
                     })
                     .valueAccessor(function (p) {
-                        return p.value.narnum;
+                        return p.value.deals;
                     })
                     .radiusValueAccessor(function (p) {
-                        return p.value.amountrangoporc;
+                        return p.value.amountRaised;
                     })
                     .x(d3.scale.linear().domain([0, 500]))
                     .r(d3.scale.linear().domain([0, 900]))
@@ -262,11 +243,11 @@
                     .title(function (p) {
                         return p.key
                                 + "\n"
-                                + "cantidad2 -> rangoporc: " + numberFormat(p.value.amountrangoporc) + "M\n"
-                                + "Numero2  ->narnum: " + numberFormat(p.value.narnum);
+                                + "cantidad2 -> Raised: " + numberFormat(p.value.amountRaised) + "M\n"
+                                + "Numero2  ->Deals: " + numberFormat(p.value.deals);
                     });
             roundChart.yAxis().tickFormat(function (s) {
-                return s + " narnum";
+                return s + " deals";
             });
             roundChart.xAxis().tickFormat(function (s) {
                 return s + "M";

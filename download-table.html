@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>dc.js - Filtering Example</title>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" type="text/css" href="../css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="../css/dc.css"/>
+    <style>
+      #table td {
+        padding-left: 10px;
+      }
+    </style>
+</head>
+<body>
+
+<div class="container">
+<script type="text/javascript" src="header.js"></script>
+  <div id="chart-ring-year" style="width:300px; height:330px">
+    <div class="reset" style="visibility: hidden;">selected: <span class="filter"></span>
+      <a href="javascript:yearRingChart.filterAll();dc.redrawAll();">reset</a>
+    </div>
+  </div>
+  <div id="chart-hist-spend" style="width:300px; height:330px">
+    <div class="reset" style="visibility: hidden;">range: <span class="filter"></span>
+      <a href="javascript:spendHistChart.filterAll();dc.redrawAll();">reset</a>
+    </div>
+  </div>
+  <div id="chart-row-spenders">
+    <div class="reset" style="visibility: hidden;">selected: <span class="filter"></span>
+      <a href="javascript:spenderRowChart.filterAll();dc.redrawAll();">reset</a>
+    </div>
+  </div>
+  <!-- not sure why all these styles necessary, not the point of this -->
+  <div style="clear: both; margin: 30px; float: left">
+    <div id="table"></div>
+    <div id="download-type" style="clear: both; float: left">
+      <div><label><input type=radio name="operation" value="raw" checked="true">&nbsp;all data</label></div>
+      <div><label><input type=radio name="operation" value="table">&nbsp;table data</label></div>
+    </div>
+    <div style="float: left">
+      <button class="btn" id="download">download</button>
+    </div>
+  </div>
+
+
+<script type="text/javascript" src="../js/d3.js"></script>
+<script type="text/javascript" src="../js/crossfilter.js"></script>
+<script type="text/javascript" src="../js/dc.js"></script>
+<script type="text/javascript" src="../js/FileSaver.js"></script>
+<script type="text/javascript">
+
+var yearRingChart   = dc.pieChart("#chart-ring-year"),
+    spendHistChart  = dc.barChart("#chart-hist-spend"),
+    spenderRowChart = dc.rowChart("#chart-row-spenders");
+
+var table = dc.dataTable('#table');
+
+// use static or load via d3.csv("spendData.csv", function(error, spendData) {/* do stuff */});
+d3.json("php/data3.php", function (data) {
+    
+    
+  
+
+
+// set crossfilter
+var data = crossfilter(data),
+    yearDim  = data.dimension(function(d) {return +d.sbm;}),
+    spendDim = data.dimension(function(d) {return Math.floor(d.idmapa/10);}),
+    nameDim  = data.dimension(function(d) {return d.edo;}),
+    spendPerYear = yearDim.group().reduceSum(function(d) {return +d.sbm;}),
+    spendPerName = nameDim.group().reduceSum(function(d) {return +d.sbm;}),
+    spendHist    = spendDim.group().reduceCount();
+
+  yearRingChart
+    .width(300)
+    .height(300)
+    .dimension(yearDim)
+    .group(spendPerYear)
+    .innerRadius(50)
+    .controlsUseVisibility(true);
+
+  spendHistChart
+    .dimension(spendDim)
+    .group(spendHist)
+    .x(d3.scale.linear().domain([0,10]))
+    .elasticY(true)
+    .controlsUseVisibility(true);
+
+spendHistChart.xAxis().tickFormat(function(d) {return d*10}); // convert back to base unit
+spendHistChart.yAxis().ticks(2);
+
+spenderRowChart
+    .dimension(nameDim)
+    .group(spendPerName)
+    .elasticX(true)
+    .controlsUseVisibility(true);
+
+var allDollars = data.groupAll().reduceSum(function(d) { return +d.sbm; });
+
+table
+    .dimension(spendDim)
+    .group(function(d) {
+        return d.value;
+    })
+    .showGroups(false)
+    .columns(['Name',
+              {
+                  label: 'sbm',
+                  format: function(d) {
+                      return '$' + d.sbm;
+                  }
+              },
+              'edoabre',
+              {
+                  label: 'Percent of Total',
+                  format: function(d) {
+                      return Math.floor((d.sbm / allDollars.value()) * 100) + '%';
+                  }
+              }]);
+
+d3.select('#download')
+    .on('click', function() {
+        var data = nameDim.top(Infinity);
+        if(d3.select('#download-type input:checked').node().value==='table') {
+            data = data.map(function(d) {
+                var row = {};
+                table.columns().forEach(function(c) {
+                    row[table._doColumnHeaderFormat(c)] = table._doColumnValueFormat(c, d);
+                });
+                return row;
+            });
+        }
+        var blob = new Blob([d3.csv.format(data)], {type: "text/csv;charset=utf-8"});
+        saveAs(blob, 'data.csv');
+    });
+
+dc.renderAll();
+});
+
+</script>
+
+</div>
+</body>
+</html>

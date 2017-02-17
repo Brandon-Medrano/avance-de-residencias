@@ -76,10 +76,7 @@
       var stateRaisedSum = states.group().reduceSum(function (d) {
       return d["Raised"];
         });
-/*
-    var stateRaisedSum = runDimension.group().reduceSum(function(d){
-         return d.ejnornum * d.ejidoscn;});
-*/
+
         var statsByIndustries = industries.group().reduce(
                 function (p, v) {
                     p.amountRaised += +v["Raised"];
