@@ -29,17 +29,32 @@
                                      </div>
                                        <!--las de pie -->
                                        <div class="container-fluid">
-                                              <div class="row" class="card-panel grey darken-1 z-depth-4">
+                                              <div class="row">
 
-                                                      <div id="test" class="col s3">
-                 
+                                                      <div id="test" class="col s6">
+                                                                <h2 alig="center">Total Ejidos</h2>
                                                      </div> 
+                                                                   <!--<div class="clearfix"></div> -->
                                     
-                                                        <div id="test2"  class="col s3" >
-                  
+                                                        <div id="test2"  class="col s6" class="card-panel grey darken-1 z-depth-4">
+                                                                <h3 align="center">Total ejidos + comunidades</h3> 
+                                                        </div>
+
+<!--
+                                                        <div id="test8"  class="col s4" class="card-panel grey darken-1 z-depth-4">
+                                                                <h3 align="center">Total mujeres y hombre  beneficiados</h3> 
                                                         </div>                                       
+    -->                                      
+
                                             </div>
-                                      </div> 
+
+                                      </div>
+                                                        <div id="gain-loss-chart" class="card-panel with z-depth-4">
+                                                             <strong>Niños /Niñas</strong>
+                                                                   <a class="reset" href="javascript:gainOrLossChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+                                                                   <div class="clearfix"></div>
+                                                        </div>
+ 
                                        <!-- -->         
                                                                       <div id="industry-chart"  class="card-panel white z-depth-4">
                                                                                 <strong>Documentos expedidos</strong> (y: Numero de documentos, x: Total en miles)
@@ -50,7 +65,7 @@
                                                                                           <a class="reset" href="javascript:roundChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
                                                                                 </div>
 
-                                                                                                              <div id="test3" class="card-panel white z-depth-4">
+                                                                                               <div id="test3" class="card-panel white z-depth-4">
 
                                                                                                </div>
                                                                                                    <!-- tabla -->
@@ -73,6 +88,9 @@
                                                                                                                                                     </div>
                                                                                                         </div>
                                                                                                <!-- ========fin tabla =========  -->
+
+
+
                  </div><!-- class col -->
           </div><!--row -->
     </div><!--container -->                                                                   
@@ -86,6 +104,7 @@
 <!--=======================================lo de graficas ===========================================-->
   <script type="text/javascript" src="../js/jquery-3.1.1.min.js"></script>  	
 <!--========================================================================================-->
+
 <script type="text/javascript"> 
     var numberFormat = d3.format(".2f");
     var usChart = dc.geoChoroplethChart("#us-chart");
@@ -93,29 +112,52 @@
     var roundChart = dc.bubbleChart("#round-chart");
     var chart = dc.pieChart("#test");
     var chart2 = dc.pieChart("#test2");
+ //   var chart8 = dc.pieChart('#test8');
     var chart3 = dc.barChart('#test3');
-    //////
     var table = dc.dataTable('#table');
-    /////
+
     d3.json("php/data3.php", function (data) {
+  /*
+     data.forEach(function (d) {
+              d.ejcernum = +d.ejcernum;
+              d.comucernum = +comucernum;
+
+            });
+*/
     var data = crossfilter(data);
- // set crossfilter
-    yearDim  = data.dimension(function(d) {return +d.sbm;}),
+  //  var all = data.groupAll();
+
+   // yearDim  = data.dimension(function(d) {return +d.sbm;}),
     spendDim = data.dimension(function(d) {return Math.floor(d.idmapa/10);}),
     nameDim  = data.dimension(function(d) {return d.edo;}),
-    spendPerYear = yearDim.group().reduceSum(function(d) {return +d.sbm;}),
-    spendPerName = nameDim.group().reduceSum(function(d) {return +d.sbm;}),
+   // spendPerYear = yearDim.group().reduceSum(function(d) {return +d.sbm;}),
+   // spendPerName = nameDim.group().reduceSum(function(d) {return +d.sbm;}),
     spendHist    = spendDim.group().reduceCount();
+/* =========================================================== */
+   /*
+     runDimension  = data.dimension(function(d) {
+         return d.sbh > sbm ? 'Hombre' : 'Mujeres';
+        });
 
-    /////////
-6
-     runDimension  = data.dimension(function(d) {return ""+d.edoabre;})
-      var  g = runDimension.group().reduceSum(function(d) {return d.ejcernum;});
+        var  g = runDimension.group();
+
+*/
+
+    runDimension  = data.dimension(function(d) {return ""+d.edoabre;})
+      
+      var  g = runDimension.group().reduceSum(function(d) {return d.ejcernum});
  
      runDimension2  = data.dimension(function(d) {return ""+d.edoabre;})
       
       var  gi = runDimension2.group().reduceSum(function(d) {return  (parseFloat(d.ejcernum)+ parseFloat(d.comucernum))});
  
+/*
+       runDimension8  = data.dimension(function(d) {return d.sbh & d.sbm})
+      
+      var  g8 = runDimension8.group().reduceSum(function(d){ return d.ejcernum  && d.comucernum});
+*/
+
+
         var states = data.dimension(function (d) {
             return d["edoabre"];
         });
@@ -131,7 +173,6 @@
          var staterangoporcSum = states.group().reduceSum(function (d) {
           return d["rangoporc"];
         });
-
          fruitDimension = data.dimension(function(d) {return d.edoabre;}),
           sumGroup = fruitDimension.group().reduceSum(function(d) {return d.narnum;});
 
@@ -151,7 +192,6 @@
                     return {amountrangoporc: 0, narnum: 0}
                 }
         );
-
         var statsByRounds = rounds.group().reduce(
                  function (p, v) {
                     p.amountrangoporc += +v["rangoporc"];
@@ -184,10 +224,10 @@
                 });        
 
                      chart
-                     .width(668)
+                     .width(568)
                      .height(280)
                      .slicesCap(32)
-                     .innerRadius(200)
+                     .radius(100)
                      .dimension(runDimension)
                      .group(g)
                      .legend(dc.legend())
@@ -196,13 +236,13 @@
                      return d.data.key + ' ' + dc.utils.printSingleValue((d.endAngle - d.startAngle) / (2*Math.PI) * 100) + '%';
                      })
                      });
-        
+           
 
                   chart2
-                     .width(668)
+                     .width(568)
                      .height(280)
                      .slicesCap(32)
-                     .innerRadius(200)
+                     .radius(100)
                      .dimension(runDimension2)
                      .group(gi)
                      .legend(dc.legend())
@@ -210,20 +250,23 @@
                      chart.selectAll('text.pie-slice').text(function(d) {
                      return d.data.key + ' ' + dc.utils.printSingleValue((d.endAngle - d.startAngle) / (2*Math.PI) * 100) + '%';
                      })
-                     });
+                    });
 
-                     chart3
-                     .width(768)
-                     .height(380)
-                     .x(d3.scale.ordinal())
-                     .xUnits(dc.units.ordinal)
-                     .brushOn(false)
-                     .xAxisLabel('Estados')
-                     .yAxisLabel('Escala')
-                     .dimension(fruitDimension)
-                     .barPadding(0.1)
-                     .outerPadding(0.05)
-                     .group(sumGroup);
+    /*                
+                     chart8
+                     .width(668)
+                     .height(280)
+                     .slicesCap(32)
+                     .radius(100)
+                     .dimension(runDimension8)
+                     .group(g8)
+                     .legend(dc.legend())
+                     .on('pretransition', function(chart) {
+                     chart.selectAll('text.pie').text(function(d) {
+                     return d.data.key + ' ' + dc.utils.printSingleValue((d.endAngle - d.startAngle) / (2/Math.PI) * 100) + '%';
+                     })
+                     });
+*/
 
                      /////////////
 
@@ -362,6 +405,3 @@ d3.select('#download')
 	
 </body>
 </html>
-             
-            
-
