@@ -29,30 +29,17 @@
                                      </div>
                                        <!--las de pie -->
                                        <div class="container-fluid">
-                                              <div class="row">
-                                                      <div id="test" class="col s6">
-                                                                <h2 alig="center">Total Ejidos</h2>
+                                              <div class="row" class="card-panel grey darken-1 z-depth-4">
+
+                                                      <div id="test" class="col s3">
+                 
                                                      </div> 
-                                                                   <!--<div class="clearfix"></div> -->
                                     
-                                                        <div id="test2"  class="col s6" class="card-panel grey darken-1 z-depth-4">
-                                                                <h3 align="center">Total ejidos + comunidades</h3> 
-                                                        </div>
-<!--
-                                                        <div id="test8"  class="col s4" class="card-panel grey darken-1 z-depth-4">
-                                                                <h3 align="center">Total mujeres y hombre  beneficiados</h3> 
+                                                        <div id="test2"  class="col s3" >
+                  
                                                         </div>                                       
-    -->                                      
-
                                             </div>
-
-                                      </div>
-                                                        <div id="gain-loss-chart" class="card-panel with z-depth-4">
-                                                             <strong>Niños /Niñass</strong>
-                                                                   <a class="reset" href="javascript:gainOrLossChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
-                                                                   <div class="clearfix"></div>
-                                                        </div>
- 
+                                      </div> 
                                        <!-- -->         
                                                                       <div id="industry-chart"  class="card-panel white z-depth-4">
                                                                                 <strong>Documentos expedidos</strong> (y: Numero de documentos, x: Total en miles)
@@ -63,13 +50,22 @@
                                                                                           <a class="reset" href="javascript:roundChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
                                                                                 </div>
 
-                                                                                               <div id="test3" class="card-panel white z-depth-4">
+                                                                                                              <div id="test3" class="card-panel white z-depth-4">
 
                                                                                                </div>
+  
+      <div id="inputSlider">
+     <div><input type="range" id="slideRange" value="0.5" min="0" max="1.0" step="0.1" onchange="updateSlider(this.value)"></div>
+     Score threshold: <span id="sliderValue">0.5</label>
+    </div>
+    <div id="dc-coreAcc-piechart"></div>
+                                                                                 <div id="dc-score-barchart"></div>
+
+
                                                                                                    <!-- tabla -->
                                                                                                         <div style="clear: both; margin: 30px; float: left">
-                                                                                                               <div id="table">
-                                                                                                               </div>
+                                                                                                                <div id="table">
+                                                                                                                </div>
                                                                                                                        <div id="download-type" style="clear: both; float: left">
                                                                                                                              
                                                                                                                                  <div><label><input type=radio name="operation" value="raw" checked="true">&nbsp;all data</label>
@@ -87,8 +83,7 @@
                                                                                                         </div>
                                                                                                <!-- ========fin tabla =========  -->
 
-
-
+                                                                                                
                  </div><!-- class col -->
           </div><!--row -->
     </div><!--container -->                                                                   
@@ -98,70 +93,74 @@
 <script type="text/javascript" src="../js/dc.js"></script>
 <script type='text/javascript' src='../js/bootstrap.min.js'></script>
 <script type="text/javascript" src="../js/FileSaver.js"></script>
+
+
+
 <!--=======================================lo de graficas ===========================================-->
   <script type="text/javascript" src="../js/jquery-3.1.1.min.js"></script>  	
 <!--========================================================================================-->
 <script type="text/javascript"> 
-  // 'use strict';
     var numberFormat = d3.format(".2f");
     var usChart = dc.geoChoroplethChart("#us-chart");
     var industryChart = dc.bubbleChart("#industry-chart");
     var roundChart = dc.bubbleChart("#round-chart");
     var chart = dc.pieChart("#test");
     var chart2 = dc.pieChart("#test2");
- //   var chart8 = dc.pieChart('#test8');
     var chart3 = dc.barChart('#test3');
-    var table = dc.dataTable('#table');
-    var gainOrLossChart = dc.pieChart('#gain-loss-chart');
-    d3.json("php/data3.php", function (data) {
-  /*
-     data.forEach(function (d) {
-              d.ejcernum = +d.ejcernum;
-              d.comucernum = +comucernum;
+    
 
-            });
-*/
+    var scoreChart = dc.barChart("#dc-score-barchart")
+                        .xAxisLabel('book_id')
+                        .yAxisLabel('score');
+    var goodYesNoPieChart = dc.pieChart('#dc-coreAcc-piechart');
+ 
+    
+    //////
+    var table = dc.dataTable('#table');
+    /////
+    d3.json("php/data3.php", function (data) {
     var data = crossfilter(data);
-    var all = data.groupAll();
-  //  var all = data.groupAll();
-   // yearDim  = data.dimension(function(d) {return +d.sbm;}),
+     var all = data.groupAll();
+
+      var bookDimension = data.dimension(function (d) {return d.edoabre;}),
+        bookscoresGroup = bookDimension.group().reduceSum(function(d) {return d.sbh;});
+
+ 
+ // set crossfilter
+    yearDim  = data.dimension(function(d) {return +d.sbm;}),
     spendDim = data.dimension(function(d) {return Math.floor(d.idmapa/10);}),
     nameDim  = data.dimension(function(d) {return d.edo;}),
-   // spendPerYear = yearDim.group().reduceSum(function(d) {return +d.sbm;}),
-   // spendPerName = nameDim.group().reduceSum(function(d) {return +d.sbm;}),
+    spendPerYear = yearDim.group().reduceSum(function(d) {return +d.sbm;}),
+    spendPerName = nameDim.group().reduceSum(function(d) {return +d.sbm;}),
     spendHist    = spendDim.group().reduceCount();
-/* =========================================================== */
-   /*
-     runDimension  = data.dimension(function(d) {
-         return d.sbh > sbm ? 'Hombre' : 'Mujeres';
-        });
-        var  g = runDimension.group();
-*/
-    runDimension  = data.dimension(function(d) {return ""+d.edoabre;})
-      var  g = runDimension.group().reduceSum(function(d) {return d.ejcernum});
+
+    /////////
+     runDimension  = data.dimension(function(d) {return ""+d.edoabre;})
+      var  g = runDimension.group().reduceSum(function(d) {return d.ejcernum;});
+ 
      runDimension2  = data.dimension(function(d) {return ""+d.edoabre;})
+      
       var  gi = runDimension2.group().reduceSum(function(d) {return  (parseFloat(d.ejcernum)+ parseFloat(d.comucernum))});
-      var gainOrLoss = data.dimension(function (d) {return d.sbh > d.sbm ? 'Hombres' : 'Mujeres';})
-    // Produce counts records in the dimension
-    var gainOrLossGroup = gainOrLoss.group();
-/*
-     runDimension8  = data.dimension(function(d) {return d.sbh & d.sbm})    
-      var  g8 = runDimension8.group().reduceSum(function(d){ return d.ejcernum  && d.comucernum});
-*/
+ 
         var states = data.dimension(function (d) {
             return d["edoabre"];
         });
+
         var industries = data.dimension(function (d) {
             return d["IndustryGroup"];
         });
+     
         var rounds = data.dimension(function (d) {
             return d["RoundClassDescr"];
         }); 
+        
          var staterangoporcSum = states.group().reduceSum(function (d) {
           return d["rangoporc"];
         });
+
          fruitDimension = data.dimension(function(d) {return d.edoabre;}),
           sumGroup = fruitDimension.group().reduceSum(function(d) {return d.narnum;});
+
         var statsByIndustries = industries.group().reduce(
                 function (p, v) {
                     p.amountrangoporc += +v["rangoporc"];
@@ -176,13 +175,15 @@
                 },
                 function () {
                     return {amountrangoporc: 0, narnum: 0}
-                });
+                }
+        );
+
         var statsByRounds = rounds.group().reduce(
                  function (p, v) {
                     p.amountrangoporc += +v["rangoporc"];
                     p.narnum += +v["narnum"];
                     return p;
-        },
+                },
                 function (p, v) {
                     p.amountrangoporc -= +v["rangoporc"];
                     if (p.amountrangoporc < 0.001) p.amountrangoporc = 0; // do some clean up
@@ -191,7 +192,8 @@
                 },
                 function () {
                     return {amountrangoporc: 0, narnum: 0}
-                });
+                }
+        );
         d3.json("../geo/mx-states.json", function (statesJson) {
             usChart.width(990)
                     .height(380)
@@ -207,35 +209,11 @@
                    return "Estado: " + d.key + "\nAvance de certificación : " + numberFormat(d.value ? d.value : 0) + "%";
                 });        
 
-
-                  gainOrLossChart
-                      // (_optional_) define chart width, `default = 200`
-                    .width(180)
-                     // (optional) define chart height, `default = 200`
-                     .height(180)
-                    // Define pie radius
-                      .radius(80)
-                     // Set dimension
-                      .dimension(gainOrLoss)
-                      // Set group
-                      .group(gainOrLossGroup)
-                     // (_optional_) by default pie chart will use `group.key` as its label but you can overwrite it with a closure.
-                      .label(function (d) { 
-                      if (gainOrLossChart.hasFilter() && !gainOrLossChart.hasFilter(d.key)) {
-                      return d.key + '(0%)';
-                      } 
-                      var label = d.key;
-                      if (all.value()) { 
-                      label += '(' + Math.floor(d.value / all.value() * 100) + '%)';
-                      } 
-                      return label;
-                      });
-
                      chart
-                     .width(568)
+                     .width(668)
                      .height(280)
                      .slicesCap(32)
-                     .radius(100)
+                     .innerRadius(200)
                      .dimension(runDimension)
                      .group(g)
                      .legend(dc.legend())
@@ -244,13 +222,78 @@
                      return d.data.key + ' ' + dc.utils.printSingleValue((d.endAngle - d.startAngle) / (2*Math.PI) * 100) + '%';
                      })
                      });
-           
+
+
+    scoreChart.width(320)
+        .height(320)
+        .dimension(bookDimension)
+        .group(bookscoresGroup)
+        .elasticY(true)
+        .x(d3.scale.ordinal())
+        .xUnits(dc.units.ordinal)
+        .colors(["green"])
+        .yAxis().ticks(5);
+
+
+            function coreCount_from_threshold() {
+        var scoreThreshold=document.getElementById('slideRange').value;
+        scoreThreshold=parseFloat(scoreThreshold);
+        if (isNaN(scoreThreshold)) {
+            scoreThreshold=0.5
+        }
+        return data.dimension(function (d) {
+            var maxNumber=32;
+            if (d.sbh >maxNumber*scoreThreshold) {
+                return 'sbh';
+            } else {
+                return 'sbm';
+            }
+        });
+    }
+    var coreCount = coreCount_from_threshold();
+    var coreCountGroup = coreCount.group();
+
+
+
+    function updateSlider(slideValue) {
+        var sliderDiv = document.getElementById("sliderValue");
+        sliderDiv.innerHTML = slideValue;
+        coreCount.dispose();
+        coreCount = coreCount_from_threshold();
+        coreCountGroup = coreCount.group();
+        goodYesNoPieChart
+            .dimension(coreCount)
+            .group(coreCountGroup);
+    }
+
+
+      goodYesNoPieChart
+        .width(320)
+        .height(320)
+        .radius(120)
+        .innerRadius(40)
+        .dimension(coreCount)
+        .title(function(d){return d.value;})
+        .group(coreCountGroup)
+        .label(function (d) {
+            if (goodYesNoPieChart.hasFilter() && !goodYesNoPieChart.hasFilter(d.key)) {
+                return d.key + '(0%)';
+            }
+            var label = d.key;
+            if (all.value()) {
+                label += '(' + Math.floor(d.value / all.value() * 100) + '%)';
+            }
+            return label;
+        })
+  
+    //dc.renderAll();
+    
 
                   chart2
-                     .width(568)
+                     .width(668)
                      .height(280)
                      .slicesCap(32)
-                     .radius(100)
+                     .innerRadius(200)
                      .dimension(runDimension2)
                      .group(gi)
                      .legend(dc.legend())
@@ -258,24 +301,23 @@
                      chart.selectAll('text.pie-slice').text(function(d) {
                      return d.data.key + ' ' + dc.utils.printSingleValue((d.endAngle - d.startAngle) / (2*Math.PI) * 100) + '%';
                      })
-                    });
-
-    /*                
-                     chart8
-                     .width(668)
-                     .height(280)
-                     .slicesCap(32)
-                     .radius(100)
-                     .dimension(runDimension8)
-                     .group(g8)
-                     .legend(dc.legend())
-                     .on('pretransition', function(chart) {
-                     chart.selectAll('text.pie').text(function(d) {
-                     return d.data.key + ' ' + dc.utils.printSingleValue((d.endAngle - d.startAngle) / (2/Math.PI) * 100) + '%';
-                     })
                      });
-*/
+
+                     chart3
+                     .width(768)
+                     .height(380)
+                     .x(d3.scale.ordinal())
+                     .xUnits(dc.units.ordinal)
+                     .brushOn(false)
+                     .xAxisLabel('Estados')
+                     .yAxisLabel('Escala')
+                     .dimension(fruitDimension)
+                     .barPadding(0.1)
+                     .outerPadding(0.05)
+                     .group(sumGroup);
+
                      /////////////
+
                       var allDollars = data.groupAll().reduceSum(function(d) { return +d.sbm; });
  
                      table
@@ -283,7 +325,7 @@
                     .group(function(d) {
                     return d.value;
                      })
-                       .showGroups(false)
+                    .showGroups(false)
                     .columns(['Name',
                     {
                   label: 'sbm',
@@ -406,8 +448,9 @@ d3.select('#download')
 <script type="text/javascript">
 </script>
 
-
-
 	
 </body>
 </html>
+             
+            
+
