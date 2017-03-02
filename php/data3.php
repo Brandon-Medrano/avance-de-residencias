@@ -6,7 +6,7 @@
     $server = mysql_connect($host, $username, $password);
     $connection = mysql_select_db($database, $server);
     $myquery = "
-SELECT * FROM `respaldo`
+SELECT * FROM `servi`
 ";
     $query = mysql_query($myquery);
     if ( ! $query ) {

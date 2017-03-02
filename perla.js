@@ -1,4 +1,5 @@
     
+
     var numberFormat = d3.format(".2f");
     var usChart = dc.geoChoroplethChart("#us-chart");
     var industryChart = dc.bubbleChart("#industry-chart");
@@ -8,20 +9,38 @@
     var chart3 = dc.barChart('#test3');
     var goodYesNoPieChart = dc.pieChart('#dc-coreAcc-piechart');
     var table = dc.dataTable('#table');
+    var piet = dc.pieChart('#pietotal');
 
     //=========== bd=========================
     d3.json("php/data3.php", function (data) {
     var data = crossfilter(data);
+    var all = data.groupAll();
+
 
     // ===================tabla =============
-        yearDim  = data.dimension(function(d) {return +d.sbm;}),          
+    yearDim  = data.dimension(function(d) {return +d.sbm;}),          
     spendPerYear = yearDim.group().reduceSum(function(d) {return +d.sbm;}),
     spendDim = data.dimension(function(d) {return Math.floor(d.idmapa/10);}),
     spendHist    = spendDim.group().reduceCount();
     nameDim  = data.dimension(function(d) {return d.edo;}),
     spendPerName = nameDim.group().reduceSum(function(d) {return +d.sbm;}),
     // =================== fin tabla =============
+
+
+// =================== pie totales=============
+
+    totaldime = data.dimension(function (d){
+    return  d.edoabre + ',' + d.sbh + ',' + d.sbm;    
+    });
+
+    var totalgrupopie = totaldime.group().reduceSum(function (d){
+    return  d.sbh + d.sbm;   
+
+    });
  
+// ===================  pie totales=============
+
+
   // ========pie ejcernum  ======================
      runDimension  = data.dimension(function(d) {return ""+d.edoabre;})
      var  g = runDimension.group().reduceSum(function(d) {return d.ejcernum;});
@@ -93,11 +112,11 @@
 
 //========== mapa ================
         d3.json("../geo/mx-states.json", function (statesJson) {
-            usChart.width(990)
+            usChart.width(890)
                     .height(380)
                     .dimension(states)
                     .group(staterangoporcSum)
-                    .colors(d3.scale.quantize().range([ "#f4d03f","#d1f2eb","#a3e4d7","#f39c12","#48c9b0","#1abc9c","#17a589","#148f77","#117864","#0e6251"]))
+                    .colors(d3.scale.quantize().range(["#0B3B0B"]))
                     .colorDomain([32, 190])
                     .colorCalculator(function (d) { return d ? usChart.colors()(d) : '#ccc'; })
                     .overlayGeoJson(statesJson.features, "state", function (d) {
@@ -108,6 +127,31 @@
                 });        
      
 //==========  fin mapa ================           
+
+// =================== pie totales=============
+        piet 
+        .width(180)
+    // (optional) define chart height, `default = 200`
+        .height(180)
+    // Define pie radius
+        .radius(80)
+    // Set dimension
+        .dimension(totaldime)
+    // Set group
+        .group(totalgrupopie)
+    // (_optional_) by default pie chart will use `group.key` as its label but you can overwrite it with a closure.
+        .label(function (d) {
+            if (piet.hasFilter() && !piet.hasFilter(d.key)) {
+                return d.key + '(0%)';
+            }
+            var label = d.key;
+            if (all.value()) {
+                label += '(' + Math.floor(d.value / all.value() * 100) + '%)';
+            }
+            return label;
+        });
+   
+// ===================  fin  de pie totales=============
 
       //================ pie  ejcernum =============            
                      chart
@@ -146,75 +190,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-                    function coreCount_from_threshold() {
-                    var scoreThreshold=document.getElementById('slideRange').value;
-                    scoreThreshold=parseFloat(scoreThreshold);
-                    if (isNaN(scoreThreshold)) {
-                    scoreThreshold=0.5
-                    }
-                    return data.dimension(function (d) {
-                    var maxNumber=32;
-                    if (d.sbh >maxNumber*scoreThreshold) {
-                    return 'sbh';
-                   } else {
-                    return 'sbm';
-                  }
-                  });
-                  }
-                  var coreCount = coreCount_from_threshold();
-                  var coreCountGroup = coreCount.group();
-
-
-//================ pie 2 columnas=====
-    function updateSlider(slideValue) {
-        var sliderDiv = document.getElementById("sliderValue");
-        sliderDiv.innerHTML = slideValue;
-        coreCount.dispose();
-        coreCount = coreCount_from_threshold();
-        coreCountGroup = coreCount.group();
-        goodYesNoPieChart
-            .dimension(coreCount)
-            .group(coreCountGroup);
-    }
-
-            goodYesNoPieChart
-            .width(320)
-            .height(320)
-            .radius(120)
-            .innerRadius(40)
-            .dimension(coreCount)
-            .title(function(d){return d.value;})
-            .group(coreCountGroup)
-            .label(function (d) {
-            if (goodYesNoPieChart.hasFilter() && !goodYesNoPieChart.hasFilter(d.key)) {
-                return d.key + '(0%)';
-            }
-             var label = d.key;
-             if (all.value()) {
-             label += '(' + Math.floor(d.value / all.value() * 100) + '%)';
-             }
-             return label;
-              })
-  
-//================ fin pie 2 columnas=====
-*/
    //=============== barras ======================
                      chart3
                      .width(968)
@@ -276,7 +251,7 @@ d3.select('#download')
               //====== fin de  descarga==========================
 
 //====================== burbujas======================
-            industryChart.width(990)
+            industryChart.width(590)
                     .height(200)
                     .margins({top: 10, right: 50, bottom: 30, left: 60})
                     .dimension(industries)
@@ -319,7 +294,7 @@ d3.select('#download')
             industryChart.xAxis().tickFormat(function (s) {
                 return s + "";
             });
-            roundChart.width(990)
+            roundChart.width(590)
                     .height(200)
                     .margins({top: 10, right: 50, bottom: 30, left: 60})
                     .dimension(rounds)
@@ -361,6 +336,9 @@ d3.select('#download')
 
             dc.renderAll();
         });
+
     });
 
-//====================== fin burbujas======================
+
+
+
