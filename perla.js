@@ -1,5 +1,4 @@
     
-
     var numberFormat = d3.format(".2f");
     var usChart = dc.geoChoroplethChart("#us-chart");
     var industryChart = dc.bubbleChart("#industry-chart");
@@ -336,7 +335,7 @@ d3.select('#download')
 
             dc.renderAll();
         });
-
+        
     });
 
 

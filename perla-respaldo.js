@@ -1,86 +1,56 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<!-- ================= inicio head =============== -->
-<meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css" href="../css/dc.css"/>
-    <link rel="stylesheet" type="text/css" href="../css/leaflet.css">
-    
-    <!-- Bootstrap -->
-    <link rel="stylesheet" type="text/css" href="../css/bootstrap.css">
-    <link rel="stylesheet" type="text/css" href="../css/main.css">
-    
-           <!-- =================Materilize=============== -->
-          <link rel="stylesheet" href="css/materialize.min.css">
-           <!-- ================= fin =============== -->
-</head>
-<body>
-<!--========================================contiene  graficas de la bd barras y la de mapa=================================================== -->
-   <div class='container-fluid'>
-               <div class="row">
-                     <div class="col s12" class="card-panel white z-depth-4">                                  
-              
-                                <div class="card-panel blue z-depth-4"> 
-                                     <h3 align="center">Registro Agrario Nacionall <h3>                    
-                               </div>
-                                       <div  id="us-chart" class="card-panel white z-depth-4"> 
-                                              <h2>Mapa de Geojeson</h2>
-                                     </div>
-                                       
-                                             <div id="test" class="card-panel white z-depth-4">
-                 
-                                             </div> 
-                                                      <div id="test2" class="card-panel white z-depth-4">
-                  
-                                                      </div>                                       
-                                                                      <div id="industry-chart"  class="card-panel white z-depth-4">
-                                                                                <strong>Documentos expedidos</strong> (y: Numero de documentos, x: Total en miles)
-                                                                                <a class="reset" href="javascript:industryChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>            
-                                                                      </div>
-                                                                                 <div id="round-chart"  class="card-panel white z-depth-4">
-                                                                                           <strong>By Rounds</strong> (y: number of narnum, x: total amount rangoporc in millions, radius: amount rangoporc)
-                                                                                          <a class="reset" href="javascript:roundChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
-                                                                                </div> 
-                 </div><!-- class col -->
-          </div><!--row -->
-    </div><!--container -->                                                                   
-<!--========================================================================================-->
-<script type="text/javascript" src="../js/d3.js"></script>
-<script type="text/javascript" src="../js/crossfilter.js"></script>
-<script type="text/javascript" src="../js/dc.js"></script>
-<script type='text/javascript' src='../js/bootstrap.min.js'></script>
-
-<!--=======================================lo de graficas ===========================================-->
-  <script type="text/javascript" src="../js/jquery-3.1.1.min.js"></script>  	
-<!--========================================================================================-->
-
-<script type="text/javascript"> 
+  
     var numberFormat = d3.format(".2f");
     var usChart = dc.geoChoroplethChart("#us-chart");
     var industryChart = dc.bubbleChart("#industry-chart");
     var roundChart = dc.bubbleChart("#round-chart");
     var chart = dc.pieChart("#test");
     var chart2 = dc.pieChart("#test2");
-    var total;
-    
+    var chart3 = dc.barChart('#test3');
+    var goodYesNoPieChart = dc.pieChart('#dc-coreAcc-piechart');
+    var table = dc.dataTable('#table');
+    var piet = dc.pieChart('#pietotal');
+
+    //=========== bd=========================
     d3.json("php/data3.php", function (data) {
-    
-    
     var data = crossfilter(data);
+    var all = data.groupAll();
 
+
+    // ===================tabla =============
+    yearDim  = data.dimension(function(d) {return +d.sbm;}),          
+    spendPerYear = yearDim.group().reduceSum(function(d) {return +d.sbm;}),
+    spendDim = data.dimension(function(d) {return Math.floor(d.idmapa/10);}),
+    spendHist    = spendDim.group().reduceCount();
+    nameDim  = data.dimension(function(d) {return d.edo;}),
+    spendPerName = nameDim.group().reduceSum(function(d) {return +d.sbm;}),
+    // =================== fin tabla =============
+
+
+// =================== pie totales=============
+
+    totaldime = data.dimension(function (d){
+    return  d.edoabre + ',' + d.sbh + ',' + d.sbm;    
+    });
+
+    var totalgrupopie = totaldime.group().reduceSum(function (d){
+    return  d.sbh + d.sbm;   
+
+    });
+ 
+// ===================  pie totales=============
+
+
+  // ========pie ejcernum  ======================
      runDimension  = data.dimension(function(d) {return ""+d.edoabre;})
-      var  g = runDimension.group().reduceSum(function(d) {return d.ejcernum;});
+     var  g = runDimension.group().reduceSum(function(d) {return d.ejcernum;});
+  // ======== fin pie ejcernum  ======================
  
+  // ========pie ejcernum y comucernum ======================
+     runDimension2  = data.dimension(function(d) {return ""+d.edoabre;})     
+      var  gi = runDimension2.group().reduceSum(function(d) {return  (parseFloat(d.ejcernum)+ parseFloat(d.comucernum))});
+  // ======== fin pie ejcernum y comucernum ======================
  
-     runDimension2  = data.dimension(function(d) {return ""+d.edoabre;})
-      
-      var  gi = runDimension2.group().reduceSum(function(d) {return d3.sum(d.ejcernum + d.comucernum)});
- 
-        var states = data.dimension(function (d) {
-            return d["edoabre"];
-        });
-
+ //========== burbujas ===========================
         var industries = data.dimension(function (d) {
             return d["IndustryGroup"];
         });
@@ -88,11 +58,23 @@
         var rounds = data.dimension(function (d) {
             return d["RoundClassDescr"];
         }); 
-        
+ //=============== fin de burbujas ======================
+
+//================ mapa ===============================
+       var states = data.dimension(function (d) {
+            return d["edoabre"];
+        });
          var staterangoporcSum = states.group().reduceSum(function (d) {
           return d["rangoporc"];
         });
+//================  fin mapa ===============================
 
+//===================== grafica barras================
+         fruitDimension = data.dimension(function(d) {return d.edoabre;}),
+          sumGroup = fruitDimension.group().reduceSum(function(d) {return d.narnum;});
+//=====================fin grafica barras================
+
+ //========== burbujas ================
         var statsByIndustries = industries.group().reduce(
                 function (p, v) {
                     p.amountrangoporc += +v["rangoporc"];
@@ -109,7 +91,6 @@
                     return {amountrangoporc: 0, narnum: 0}
                 }
         );
-
         var statsByRounds = rounds.group().reduce(
                  function (p, v) {
                     p.amountrangoporc += +v["rangoporc"];
@@ -126,13 +107,16 @@
                     return {amountrangoporc: 0, narnum: 0}
                 }
         );
+ //========== fin  burbujas ================
+
+//========== mapa ================
         d3.json("../geo/mx-states.json", function (statesJson) {
-            usChart.width(990)
+            usChart.width(890)
                     .height(380)
                     .dimension(states)
                     .group(staterangoporcSum)
-                    .colors(d3.scale.quantize().range([ "#e8f8f5","#d1f2eb","#a3e4d7","#76d7c4","#48c9b0","#1abc9c","#17a589","#148f77","#117864","#0e6251"]))
-                    .colorDomain([32, 195])
+                    .colors(d3.scale.quantize().range(["#0B3B0B"]))
+                    .colorDomain([32, 190])
                     .colorCalculator(function (d) { return d ? usChart.colors()(d) : '#ccc'; })
                     .overlayGeoJson(statesJson.features, "state", function (d) {
                         return d.properties.name;
@@ -140,12 +124,40 @@
                     .title(function (d) {
                    return "Estado: " + d.key + "\nAvance de certificación : " + numberFormat(d.value ? d.value : 0) + "%";
                 });        
+     
+//==========  fin mapa ================           
 
+// =================== pie totales=============
+        piet 
+        .width(180)
+    // (optional) define chart height, `default = 200`
+        .height(180)
+    // Define pie radius
+        .radius(80)
+    // Set dimension
+        .dimension(totaldime)
+    // Set group
+        .group(totalgrupopie)
+    // (_optional_) by default pie chart will use `group.key` as its label but you can overwrite it with a closure.
+        .label(function (d) {
+            if (piet.hasFilter() && !piet.hasFilter(d.key)) {
+                return d.key + '(0%)';
+            }
+            var label = d.key;
+            if (all.value()) {
+                label += '(' + Math.floor(d.value / all.value() * 100) + '%)';
+            }
+            return label;
+        });
+   
+// ===================  fin  de pie totales=============
+
+      //================ pie  ejcernum =============            
                      chart
                      .width(668)
                      .height(280)
                      .slicesCap(32)
-                     .innerRadius(200)
+                     .radius(120)
                      .dimension(runDimension)
                      .group(g)
                      .legend(dc.legend())
@@ -153,14 +165,16 @@
                      chart.selectAll('text.pie-slice').text(function(d) {
                      return d.data.key + ' ' + dc.utils.printSingleValue((d.endAngle - d.startAngle) / (2*Math.PI) * 100) + '%';
                      })
-                     });
-           
-
+                    });
+                    
+      //================ fin  pie ejcernum =============
+    
+    //================ pie  ejcernum y comucernum =============                           
                   chart2
                      .width(668)
                      .height(280)
                      .slicesCap(32)
-                     .innerRadius(200)
+                     .radius(120)
                      .dimension(runDimension2)
                      .group(gi)
                      .legend(dc.legend())
@@ -168,9 +182,75 @@
                      chart.selectAll('text.pie-slice').text(function(d) {
                      return d.data.key + ' ' + dc.utils.printSingleValue((d.endAngle - d.startAngle) / (2*Math.PI) * 100) + '%';
                      })
-                     });
-           
-            industryChart.width(990)
+                    });
+    //================ fin pie  ejcernum y comucernum =============
+
+
+
+
+
+   //=============== barras ======================
+                     chart3
+                     .width(968)
+                     .height(380)
+                     .x(d3.scale.ordinal())
+                     .xUnits(dc.units.ordinal)
+                     .brushOn(false)
+                     .xAxisLabel('Estados')
+                     .yAxisLabel('Escala')
+                     .dimension(fruitDimension)
+                     .barPadding(0.1)
+                     .outerPadding(0.05)
+                     .group(sumGroup);
+
+   //=============== fin  barras ======================
+
+//==================== tabla ====================
+                       var allDollars = data.groupAll().reduceSum(function(d) { return +d.sbm; });
+                       table
+                       .dimension(spendDim)
+                       .group(function(d) {
+                        return d.value;
+                       })
+                       .showGroups(false)
+                       .columns(['name',
+                       {
+                       label: 'sbm',
+                        format: function(d) {
+                       return '$' + d.sbm;
+                       }
+                       },
+                      'edoabre',
+                       {
+                       label: 'Percent of Total',
+                      format: function(d) {
+                      return Math.floor((d.sbm / allDollars.value()) * 100) + '%';
+                      }
+                     }]);
+
+  
+//==================== fin  tabla ====================                   
+              
+              //====== descarga==========================
+d3.select('#download')
+    .on('click', function() {
+        var data = nameDim.top(Infinity);
+        if(d3.select('#download-type input:checked').node().value==='table') {
+            data = data.map(function(d) {
+                var row = {};
+                table.columns().forEach(function(c) {
+                    row[table._doColumnHeaderFormat(c)] = table._doColumnValueFormat(c, d);
+                });
+                return row;
+            });
+        }
+        var blob = new Blob([d3.csv.format(data)], {type: "text/csv;charset=utf-8"});
+        saveAs(blob, 'data.csv');
+    });
+              //====== fin de  descarga==========================
+
+//====================== burbujas======================
+            industryChart.width(590)
                     .height(200)
                     .margins({top: 10, right: 50, bottom: 30, left: 60})
                     .dimension(industries)
@@ -213,7 +293,7 @@
             industryChart.xAxis().tickFormat(function (s) {
                 return s + "";
             });
-            roundChart.width(990)
+            roundChart.width(590)
                     .height(200)
                     .margins({top: 10, right: 50, bottom: 30, left: 60})
                     .dimension(rounds)
@@ -255,16 +335,9 @@
 
             dc.renderAll();
         });
+        
     });
-</script>
-<script type="text/javascript">
-</script>
 
 
 
-	
-</body>
-</html>
-             
-            
 
